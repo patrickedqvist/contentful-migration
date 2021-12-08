@@ -1,18 +1,21 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+import {MANAGEMENT_API_KEY, SPACE_ID} from './constants'
+import {Logger} from './utils'
+import {createClient} from 'contentful-management'
+import {runAction} from './action'
 
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
-
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
-
-    core.setOutput('time', new Date().toTimeString())
+    const client = createClient({
+      accessToken: MANAGEMENT_API_KEY
+    })
+    const space = await client.getSpace(SPACE_ID)
+    await runAction(space)
   } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message)
+    if (error instanceof Error) {
+      Logger.error(error.message)
+      core.setFailed(error.message)
+    }
   }
 }
 

@@ -1,17 +1,15 @@
 {
-  "name": "typescript-action",
-  "version": "0.0.0",
-  "private": true,
-  "description": "TypeScript template action",
-  "main": "lib/main.js",
+  "name": "contentful-migrations-action",
+  "version": "2.0.0",
+  "description": "JavaScript Action for Contentful migrations",
+  "main": "dist/main.js",
   "scripts": {
     "build": "tsc",
-    "format": "prettier --write '**/*.ts'",
-    "format-check": "prettier --check '**/*.ts'",
+    "format": "prettier --write \"src/*.ts\"",
+    "format-check": "prettier --check \"src/*.ts\"",
     "lint": "eslint src/**/*.ts",
     "package": "ncc build --source-map --license licenses.txt",
-    "test": "jest",
-    "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
+    "all": "npm run build && npm run format && npm run lint && npm run package"
   },
   "repository": {
     "type": "git",
@@ -25,19 +23,21 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.6.0"
+    "@actions/core": "^1.6.0",
+    "@actions/github": "^5.0.0",
+    "chalk": "^5.0.0",
+    "contentful-management": "^7.45.7",
+    "contentful-migration": "^4.6.0",
+    "to-semver": "^4.0.0"
   },
   "devDependencies": {
-    "@types/node": "^16.10.5",
-    "@typescript-eslint/parser": "^5.0.0",
-    "@vercel/ncc": "^0.31.1",
-    "eslint": "^7.32.0",
-    "eslint-plugin-github": "^4.3.2",
-    "eslint-plugin-jest": "^25.0.5",
-    "jest": "^27.2.5",
-    "js-yaml": "^4.1.0",
-    "prettier": "2.4.1",
-    "ts-jest": "^27.0.5",
-    "typescript": "^4.4.4"
+    "@types/node": "^16.11.12",
+    "@typescript-eslint/parser": "^5.6.0",
+    "@vercel/ncc": "^0.33.0",
+    "eslint": "^8.4.1",
+    "eslint-plugin-github": "^4.3.5",
+    "eslint-plugin-jest": "^25.3.0",
+    "prettier": "2.5.1",
+    "typescript": "^4.5.2"
   }
 }
