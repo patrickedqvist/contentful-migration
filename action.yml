@@ -1,11 +1,41 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Contentful Migration'
+description: 'Run a Migration against your Contentful space'
 inputs:
-  milliseconds: # change this
+  delete_feature:    
+    description: "The head branch will be deleted after it was merged"
+    required: false
+  set_alias:    
+    description: "The master will be aliased to the new master"
+    required: false
+  master_pattern:    
+    description: "The pattern that should be used for the new master"
+    required: false
+  feature_pattern:    
+    description: "The pattern that should be used for the new feature"
+    required: false
+  version_content_type:    
+    description: "The content-type that tracks the version"
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+  version_field:    
+    description: "The field that carries the version number"
+    required: true
+  migrations_dir:    
+    description: "The directory to look for migrations"
+    required: true
+  space_id:
+    description: "The id of the contentful space"
+    required: true
+  management_api_key:
+    description: "The management-api key for contentful"
+    required: true
+outputs:
+  environment_url:
+    description: "Contentful environment URL"
+  environment_name:
+    description: "Contentful environment name"
 runs:
-  using: 'node12'
-  main: 'dist/index.js'
+  using: "node12"
+  main: "dist/index.js"
+branding:
+  icon: "upload-cloud"
+  color: "red"
