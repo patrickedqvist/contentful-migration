@@ -1,35 +1,29 @@
-import * as core from '@actions/core'
-import * as github from '@actions/github'
-import {runMigration} from 'contentful-migration'
-import {readdir} from 'fs'
-import path from 'path'
-import {promisify} from 'util'
-import toSemver from 'to-semver'
-import {Space} from 'contentful-management/dist/typings/entities/space'
+import core from '@actions/core';
+import github from '@actions/github';
+import { runMigration } from 'contentful-migration';
+import { readdir } from 'fs';
+import path from 'path';
+import { promisify } from 'util';
+import toSemver from 'to-semver';
+import { Space } from 'contentful-management/dist/typings/entities/space';
 
+import { MAX_NUMBER_OF_TRIES, CONTENTFUL_ALIAS } from './constants';
 import {
-  CONTENTFUL_ALIAS,
-  DELETE_FEATURE,
-  SET_ALIAS,
-  MANAGEMENT_API_KEY,
-  MAX_NUMBER_OF_TRIES,
   MIGRATIONS_DIR,
-  SPACE_ID,
   VERSION_CONTENT_TYPE,
   VERSION_FIELD,
-  FEATURE_PATTERN
-} from './constants'
-import {
-  delay,
-  filenameToVersion,
-  getBranchNames,
-  getEnvironment,
-  getNameFromPattern,
-  Logger,
-  versionToFilename
-} from './utils'
+  SPACE_ID,
+  MANAGEMENT_API_KEY,
+  SET_ALIAS,
+  DELETE_FEATURE,
+  FEATURE_PATTERN,
+} from './env';
+import { getBranchNames, getEnvironment } from './github';
+import { filenameToVersion, versionToFilename, getNameFromPattern } from './util/names';
+import delay from './util/delay';
+import Logger from './util/logger';
 
-export const readdirAsync = promisify(readdir)
+export const readdirAsync = promisify(readdir);
 
 /**
  * Run the action
@@ -37,175 +31,141 @@ export const readdirAsync = promisify(readdir)
  */
 export const runAction = async (space: Space): Promise<void> => {
   // Get base and if a pull request also the head ref
-  const branchNames = getBranchNames()
+  const branchNames = getBranchNames();
 
-  Logger.verbose(
-    `Branch names for getting environment ${JSON.stringify(branchNames)}`
-  )
+  Logger.debug(`Branch names for getting environment ${JSON.stringify(branchNames)}`);
 
-  const envResponse = await getEnvironment(space, branchNames)
-
-  if (!envResponse) {
-    throw new Error('No environment was found or created')
-  }
-
-  const {environmentId, environment, environmentType} = envResponse
+  const { environmentId, environment, environmentType } = await getEnvironment(space, branchNames);
 
   // Counter to limit retries
-  let count = 0
+  let count = 0;
 
-  Logger.log('Waiting for environment processing...')
+  Logger.info('Waiting for environment processing...');
 
   while (count < MAX_NUMBER_OF_TRIES) {
-    const env = await space.getEnvironment(environment.sys.id)
-    const status = env.sys.status.sys.id
+    const env = await space.getEnvironment(environment.sys.id);
+    const status = env.sys.status.sys.id;
 
     if (status === 'ready') {
-      Logger.success(
-        `Successfully processed new environment: "${environmentId}"`
-      )
-      break
+      Logger.success(`Successfully processed new environment: "${environmentId}"`);
+      break;
     } else if (status === 'failed') {
-      Logger.warn('Environment creation failed')
-      break
+      Logger.warn('Environment creation failed');
+      break;
     }
 
-    await delay()
-    count++
+    await delay();
+    count++;
   }
 
-  Logger.verbose('Update API Keys to allow access to new environment')
+  Logger.debug('Update API Keys to allow access to new environment');
   const newEnv = {
     sys: {
       type: 'Link',
       linkType: 'Environment',
-      id: environmentId
-    }
-  }
+      id: environmentId,
+    },
+  };
 
-  const {items: keys} = await space.getApiKeys()
+  const { items: keys } = await space.getApiKeys();
   await Promise.all(
-    keys.map(async key => {
-      Logger.verbose(`Updating: "${key.sys.id}"`)
-      key.environments.push(newEnv)
-      return key.update()
+    keys.map((key) => {
+      Logger.debug(`Updating: "${key.sys.id}"`);
+      key.environments.push(newEnv);
+      return key.update();
     })
-  )
+  );
 
-  Logger.verbose('Get default locale for new environment')
-  const locales = await environment.getLocales()
-  const defaultLocale = locales.items.find(locale => locale.default)
+  Logger.debug('Get default locale for new environment');
+  const locales = await environment.getLocales();
+  const defaultLocale = locales.items.find((locale) => locale.default);
+  const defaultLocaleCode = defaultLocale.code;
+  Logger.debug(`Default locale: "${defaultLocaleCode}"`);
 
-  if (!defaultLocale) {
-    throw new Error('No default locale found')
-  }
-
-  const defaultLocaleCode = defaultLocale.code
-  Logger.verbose(`Default locale: "${defaultLocaleCode}"`)
-
-  Logger.verbose('Read all the available migrations from the file system')
+  Logger.debug('Read all the available migrations from the file system');
   // Check for available migrations
   // Migration scripts need to be sorted in order to run without conflicts
-  const migrationFiles = await readdirAsync(MIGRATIONS_DIR)
+  const migrationFiles = await readdirAsync(MIGRATIONS_DIR);
   const availableMigrations = toSemver(
-    migrationFiles.map(file => filenameToVersion(file)),
-    {clean: false}
-  ).reverse()
+    migrationFiles.map((file) => filenameToVersion(file)),
+    { clean: false }
+  ).reverse();
 
-  Logger.verbose(
-    `versionOrder: ${JSON.stringify(availableMigrations, null, 4)}`
-  )
+  Logger.debug(`versionOrder: ${JSON.stringify(availableMigrations, null, 4)}`);
 
-  Logger.verbose('Find current version of the contentful space')
-  const {items: versions} = await environment.getEntries({
-    content_type: VERSION_CONTENT_TYPE
-  })
+  Logger.debug('Find current version of the contentful space');
+  const { items: versions } = await environment.getEntries({
+    content_type: VERSION_CONTENT_TYPE,
+  });
 
   // If there is no entry or more than one of CONTENTFUL_VERSION_TRACKING
   // Then throw an Error and abort
   if (versions.length === 0) {
-    throw new Error(
-      `Error occured, no entry of type "${VERSION_CONTENT_TYPE}" was found`
-    )
+    throw new Error(`Error occured, no entry of type "${VERSION_CONTENT_TYPE}" was found`);
   } else if (versions.length > 1) {
-    throw new Error(
-      `There should only be one entry of type "${VERSION_CONTENT_TYPE}"`
-    )
+    throw new Error(`There should only be one entry of type "${VERSION_CONTENT_TYPE}"`);
   }
 
-  const [storedVersionEntry] = versions
-  const currentVersionString =
-    storedVersionEntry.fields[VERSION_FIELD][defaultLocaleCode]
+  const [storedVersionEntry] = versions;
+  const currentVersionString = storedVersionEntry.fields[VERSION_FIELD][defaultLocaleCode];
 
-  Logger.verbose('Evaluate which migrations to run')
-  const currentMigrationIndex =
-    availableMigrations.indexOf(currentVersionString)
+  Logger.debug('Evaluate which migrations to run');
+  const currentMigrationIndex = availableMigrations.indexOf(currentVersionString);
 
   // If the migration can't be found
   // Then abort
   if (currentMigrationIndex === -1) {
-    throw new Error(
-      `Version ${currentVersionString} is not matching with any known migration`
-    )
+    throw new Error(`Version ${currentVersionString} is not matching with any known migration`);
   }
 
-  const migrationsToRun = availableMigrations.slice(currentMigrationIndex + 1)
+  const migrationsToRun = availableMigrations.slice(currentMigrationIndex + 1);
   const migrationOptions = {
     spaceId: SPACE_ID,
     environmentId,
     accessToken: MANAGEMENT_API_KEY,
-    yes: true
-  }
+    yes: true,
+  };
 
-  Logger.verbose('Run migrations and update version entry')
+  Logger.debug('Run migrations and update version entry');
   // Allow mutations
-  let migrationToRun
-  let mutableStoredVersionEntry = storedVersionEntry
+  let migrationToRun;
+  let mutableStoredVersionEntry = storedVersionEntry;
   while ((migrationToRun = migrationsToRun.shift())) {
-    const filePath = path.join(
-      MIGRATIONS_DIR,
-      versionToFilename(migrationToRun)
-    )
-    Logger.verbose(`Running ${filePath}`)
+    const filePath = path.join(MIGRATIONS_DIR, versionToFilename(migrationToRun));
+    Logger.debug(`Running ${filePath}`);
     await runMigration(
       Object.assign(migrationOptions, {
-        filePath
+        filePath,
       })
-    )
-    Logger.success(`Migration script ${migrationToRun}.js succeeded`)
+    );
+    Logger.success(`Migration script ${migrationToRun}.js succeeded`);
 
-    mutableStoredVersionEntry.fields.version[defaultLocaleCode] = migrationToRun
-    mutableStoredVersionEntry = await mutableStoredVersionEntry.update()
-    mutableStoredVersionEntry = await mutableStoredVersionEntry.publish()
+    mutableStoredVersionEntry.fields.version[defaultLocaleCode] = migrationToRun;
+    mutableStoredVersionEntry = await mutableStoredVersionEntry.update();
+    mutableStoredVersionEntry = await mutableStoredVersionEntry.publish();
 
-    Logger.success(
-      `Updated field ${VERSION_FIELD} in ${VERSION_CONTENT_TYPE} entry to ${migrationToRun}`
-    )
+    Logger.success(`Updated field ${VERSION_FIELD} in ${VERSION_CONTENT_TYPE} entry to ${migrationToRun}`);
   }
 
-  Logger.log(`Checking if we need to update ${CONTENTFUL_ALIAS} alias`)
+  Logger.info(`Checking if we need to update ${CONTENTFUL_ALIAS} alias`);
   // If the environmentType is ${CONTENTFUL_ALIAS} ("master")
   // Then set the alias to the new environment
   // Else inform the user
 
   if (environmentType === CONTENTFUL_ALIAS && SET_ALIAS) {
-    Logger.log(`Running on ${CONTENTFUL_ALIAS}.`)
-    Logger.log(`Updating ${CONTENTFUL_ALIAS} alias.`)
+    Logger.info(`Running on ${CONTENTFUL_ALIAS}.`);
+    Logger.info(`Updating ${CONTENTFUL_ALIAS} alias.`);
     await space
       .getEnvironmentAlias(CONTENTFUL_ALIAS)
-      .then(async alias => {
-        alias.environment.sys.id = environmentId
-        return await alias.update()
+      .then((alias) => {
+        alias.environment.sys.id = environmentId;
+        return alias.update();
       })
-      .then(alias => Logger.success(`alias ${alias.sys.id} updated.`))
-      .catch(error => {
-        if (error instanceof Error) {
-          Logger.error(error.message)
-        }
-      })
+      .then((alias) => Logger.success(`alias ${alias.sys.id} updated.`))
+      .catch(Logger.error);
   } else {
-    Logger.verbose('Running on feature branch')
-    Logger.verbose('No alias changes required')
+    Logger.debug('Running on feature branch');
+    Logger.debug('No alias changes required');
   }
 
   // If the sandbox environment should be deleted
@@ -218,28 +178,20 @@ export const runAction = async (space: Space): Promise<void> => {
     github.context.payload.pull_request?.merged
   ) {
     try {
-      const branchName = branchNames.headRef
-
-      if (!branchName) {
-        throw new Error('No branch name found')
-      }
       const environmentIdToDelete = getNameFromPattern(FEATURE_PATTERN, {
-        branchName: branchName
-      })
-      Logger.log(`Delete the environment: ${environmentIdToDelete}`)
-      const existingEnv = await space.getEnvironment(environmentIdToDelete)
-      await existingEnv?.delete()
-      Logger.success(`Deleted the environment: ${environmentIdToDelete}`)
+        branchName: branchNames.headRef,
+      });
+      Logger.info(`Delete the environment: ${environmentIdToDelete}`);
+      const environment = await space.getEnvironment(environmentIdToDelete);
+      await environment?.delete();
+      Logger.success(`Deleted the environment: ${environmentIdToDelete}`);
     } catch (error) {
-      Logger.error('Cannot delete the environment')
+      Logger.error('Cannot delete the environment');
     }
   }
 
   // Set the outputs for further actions
-  core.setOutput(
-    'environment_url',
-    `https://app.contentful.com/spaces/${space.sys.id}/environments/${environmentId}`
-  )
-  core.setOutput('environment_name', environmentId)
-  Logger.success('🚀 All done 🚀')
-}
+  core.setOutput('environment_url', `https://app.contentful.com/spaces/${space.sys.id}/environments/${environmentId}`);
+  core.setOutput('environment_name', environmentId);
+  Logger.success('🚀 All done 🚀');
+};

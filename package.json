@@ -1,44 +1,52 @@
 {
-  "name": "contentful-migrations-action",
+  "name": "contentful-migration",
   "version": "1.0.0",
-  "description": "JavaScript Action for Contentful migrations",
-  "main": "lib/main.js",
+  "description": "Github action for running Contentful migrations",
+  "main": "src/index.ts",
+  "type": "module",
   "scripts": {
-    "build": "tsc",
-    "format": "prettier --write \"src/*.ts\"",
-    "format-check": "prettier --check \"src/*.ts\"",
-    "lint": "eslint src/**/*.ts",
-    "package": "ncc build src/main.ts --source-map --license licenses.txt",
-    "all": "npm run build && npm run format && npm run lint && npm run package"
+    "test": "jest",
+    "build": "ncc build src/index.ts",
+    "lint": "eslint src/index.ts --fix",
+    "format": "prettier --write \"src/**/*.ts\""
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/patrickedqvist/contentful-migration.git"
   },
   "keywords": [
-    "actions",
-    "contentful",
-    "migration"
+    "Github",
+    "Actions",
+    "Contentful",
+    "Migration"
   ],
-  "author": "patrickedqvist <patrick.edqvist@gmail.com>",
+  "author": "Patrick Edqvist <patrick.edqvist@gmail.com>",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/patrickedqvist/contentful-migration/issues"
+  },
+  "homepage": "https://github.com/patrickedqvist/contentful-migration#readme",
+  "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/preset-env": "^7.16.4",
+    "@babel/preset-typescript": "^7.16.0",
+    "@types/jest": "^27.0.3",
+    "@types/node": "^16.11.12",
+    "@typescript-eslint/eslint-plugin": "^5.6.0",
+    "@typescript-eslint/parser": "^5.6.0",
+    "@vercel/ncc": "^0.33.0",
+    "babel-jest": "^27.4.2",
+    "eslint": "^8.4.1",
+    "jest": "^27.4.3",
+    "prettier": "2.5.1",
+    "typescript": "^4.5.2"
+  },
   "dependencies": {
     "@actions/core": "^1.6.0",
     "@actions/github": "^5.0.0",
     "chalk": "^5.0.0",
     "contentful-management": "^7.45.7",
     "contentful-migration": "^4.6.0",
-    "to-semver": "^4.0.0",
-    "tslib": "^1.10.0"
-  },
-  "devDependencies": {
-    "@types/node": "^16.11.12",
-    "@typescript-eslint/parser": "^5.6.0",
-    "@vercel/ncc": "^0.33.0",
-    "eslint": "^8.4.1",
-    "eslint-plugin-github": "^4.3.5",
-    "eslint-plugin-jest": "^25.3.0",
-    "prettier": "2.5.1",
-    "typescript": "^4.5.2"
+    "to-semver": "^4.0.0"
   }
 }
