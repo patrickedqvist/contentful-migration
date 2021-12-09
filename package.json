@@ -8,7 +8,7 @@
     "format": "prettier --write \"src/*.ts\"",
     "format-check": "prettier --check \"src/*.ts\"",
     "lint": "eslint src/**/*.ts",
-    "package": "ncc build --source-map --license licenses.txt",
+    "package": "ncc build src/main.ts --source-map --license licenses.txt",
     "all": "npm run build && npm run format && npm run lint && npm run package"
   },
   "repository": {
@@ -28,7 +28,8 @@
     "chalk": "^5.0.0",
     "contentful-management": "^7.45.7",
     "contentful-migration": "^4.6.0",
-    "to-semver": "^4.0.0"
+    "to-semver": "^4.0.0",
+    "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@types/node": "^16.11.12",

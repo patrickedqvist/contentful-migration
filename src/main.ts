@@ -1,7 +1,8 @@
 import * as core from '@actions/core'
+import {createClient} from 'contentful-management'
+
 import {MANAGEMENT_API_KEY, SPACE_ID} from './constants'
 import {Logger} from './utils'
-import {createClient} from 'contentful-management'
 import {runAction} from './action'
 
 async function run(): Promise<void> {
