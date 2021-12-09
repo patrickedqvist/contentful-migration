@@ -29,7 +29,7 @@
     "contentful-management": "^7.45.7",
     "contentful-migration": "^4.6.0",
     "to-semver": "^4.0.0",
-    "tslib": "^1.10.0"
+    "tslib": "^2.3.1"
   },
   "devDependencies": {
     "@types/node": "^16.11.12",
