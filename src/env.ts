@@ -20,7 +20,7 @@ const DEFAULT_MAX_NUMBER_OF_TRIES = '10';
  */
 
 // Required
-const spaceId = getInput('spaceId', { required: true });
+const spaceId = getInput('space_id', { required: true });
 const managementApiKey = getInput('management_api_key', { required: true });
 
 // Optionals
