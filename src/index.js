@@ -3,6 +3,6 @@ import Observable from 'zen-observable';
 
 global.Observable = Observable;
 require('any-observable/register')('global.Observable');
+const main = require('./main');
 
-require('dotenv').config();
-require('./main').main(process.argv.slice(2));
+main();
