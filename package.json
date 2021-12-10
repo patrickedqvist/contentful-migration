@@ -3,10 +3,9 @@
   "version": "1.0.0",
   "description": "Github action for running Contentful migrations",
   "main": "src/index.ts",
-  "type": "module",
   "scripts": {
     "test": "jest",
-    "build": "ncc build src/index.ts",
+    "build": "ncc build --source-map --license licenses.txt",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\""
   },
@@ -35,7 +34,7 @@
     "@types/node": "^16.11.12",
     "@typescript-eslint/eslint-plugin": "^5.6.0",
     "@typescript-eslint/parser": "^5.6.0",
-    "@vercel/ncc": "^0.33.0",
+    "@vercel/ncc": "^0.28.6",
     "babel-jest": "^27.4.4",
     "eslint": "^8.4.1",
     "eslint-config-prettier": "^8.3.0",
@@ -47,7 +46,7 @@
   "dependencies": {
     "@actions/core": "^1.6.0",
     "@actions/github": "^5.0.0",
-    "any-observable": "^0.3.0",
+    "any-observable": "^0.5.1",
     "chalk": "^5.0.0",
     "contentful-management": "^7.45.7",
     "contentful-migration": "^4.6.0",

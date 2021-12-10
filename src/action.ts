@@ -72,6 +72,11 @@ export const runAction = async (space: Space): Promise<void> => {
   const env = await space.getEnvironment(environment.sys.id);
   const locales = await env.getLocales();
   const defaultLocale = locales.items.find((locale) => locale.default);
+
+  if (!defaultLocale) {
+    throw new Error('No default locale found');
+  }
+
   const defaultLocaleCode = defaultLocale.code;
   Logger.debug(`Default locale: "${defaultLocaleCode}"`);
 
@@ -180,6 +185,10 @@ export const runAction = async (space: Space): Promise<void> => {
     github.context.payload.pull_request?.merged
   ) {
     try {
+      if (!branchNames.headRef) {
+        throw new Error('No head ref found');
+      }
+
       const environmentIdToDelete = getNameFromPattern(FEATURE_PATTERN, {
         branchName: branchNames.headRef,
       });

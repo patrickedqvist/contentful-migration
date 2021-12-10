@@ -70,3 +70,6 @@ typings/
 
 # Mac OS
 .DS_Store
+
+# tsc output
+lib

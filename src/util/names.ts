@@ -38,7 +38,7 @@ export const matchers = {
   [Matcher.hh]: (date: Date): string => `${date.getUTCHours()}`.padStart(2, '0'),
   [Matcher.mm]: (date: Date): string => `${date.getUTCMinutes()}`.padStart(2, '0'),
   [Matcher.YYYY]: (date: Date): string => `${date.getUTCFullYear()}`,
-  [Matcher.YY]: (date: Date): string => `${date.getUTCFullYear()}`.substr(2, 2),
+  [Matcher.YY]: (date: Date): string => `${date.getUTCFullYear()}`.substring(2, 2),
   [Matcher.MM]: (date: Date): string => `${date.getUTCMonth() + 1}`.padStart(2, '0'),
   [Matcher.DD]: (date: Date): string => `${date.getDate()}`.padStart(2, '0'),
   [Matcher.branch]: (branchName: string): string => branchNameToEnvironmentName(branchName),
@@ -54,6 +54,9 @@ export const getNameFromPattern = (pattern: string, { branchName }: NameFromPatt
   return pattern.replace(/\[(YYYY|YY|MM|DD|hh|mm|ss|branch)]/g, (substring, match: Matcher) => {
     switch (match) {
       case Matcher.branch:
+        if (!branchName) {
+          return substring;
+        }
         return matchers[Matcher.branch](branchName);
       case Matcher.YYYY:
       case Matcher.YY:
