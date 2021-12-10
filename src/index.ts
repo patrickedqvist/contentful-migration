@@ -1,5 +1,6 @@
-import 'any-observable/register/zen';
-import 'any-observable';
+// eslint-disable-next-line
+require("any-observable/register")('zen-observable');
+require('any-observable');
 
 import * as core from '@actions/core';
 import { createClient } from 'contentful-management';
