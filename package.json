@@ -51,7 +51,7 @@
     "chalk": "^5.0.0",
     "contentful-management": "^7.45.7",
     "contentful-migration": "^4.6.0",
-    "rxjs": "^7.4.0",
-    "to-semver": "^4.0.0"
+    "to-semver": "^4.0.0",
+    "zen-observable": "^0.8.15"
   }
 }

@@ -1,5 +1,5 @@
 // eslint-disable-next-line
-require("any-observable/register")('rxjs')
+import 'any-observable/register/zen';
 require('any-observable');
 
 import * as core from '@actions/core';
