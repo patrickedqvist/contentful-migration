@@ -22,7 +22,6 @@ import {
 } from './env';
 import { getBranchNames, getOrCreateEnvironment } from './github';
 import { filenameToVersion, versionToFilename, getNameFromPattern } from './util/names';
-import delay from './util/delay';
 import Logger from './util/logger';
 import waitForEnvironment from './util/waitForEnvironment';
 
@@ -45,10 +44,10 @@ export const runAction = async (space: Space): Promise<void> => {
   const wait = parseInt(DELAY, 10);
   const maxTries = parseInt(MAX_NUMBER_OF_TRIES, 10);
   await waitForEnvironment({
-    space, 
+    space,
     environment,
-    delay: wait, 
-    maxTries
+    delay: wait,
+    maxTries,
   });
 
   Logger.debug('Update API Keys to allow access to new environment');
@@ -128,7 +127,7 @@ export const runAction = async (space: Space): Promise<void> => {
   let mutableStoredVersionEntry = storedVersionEntry;
   while ((migrationToRun = migrationsToRun.shift())) {
     const filePath = path.join(MIGRATIONS_DIR, versionToFilename(migrationToRun));
-    
+
     Logger.debug(`Running ${filePath}`);
 
     await runMigration(
@@ -162,8 +161,8 @@ export const runAction = async (space: Space): Promise<void> => {
       })
       .then((alias) => Logger.success(`alias ${alias.sys.id} updated.`))
       .catch((error) => {
-        if ( error instanceof Error) {
-          Logger.error(error.message)
+        if (error instanceof Error) {
+          Logger.error(error.message);
         }
       });
   } else {

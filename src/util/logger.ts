@@ -1,5 +1,5 @@
 import { info, warning } from '@actions/core';
-import chalk from 'chalk'
+import chalk from 'chalk';
 import { VERBOSE } from '../env';
 
 // Force colors in github

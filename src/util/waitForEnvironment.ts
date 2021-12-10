@@ -1,6 +1,5 @@
 import { Environment, Space } from 'contentful-management';
-import { DELAY } from '../env';
-import wait from './delay'
+import wait from './delay';
 import Logger from './logger';
 
 async function waitForEnvironment({

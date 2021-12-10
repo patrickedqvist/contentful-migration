@@ -1,5 +1,5 @@
 import * as github from '@actions/github';
-import { PullRequest, PullRequestEvent, PushEvent } from '@octokit/webhooks-definitions/schema';
+import { PullRequestEvent, PushEvent } from '@octokit/webhooks-definitions/schema';
 
 import type { Space } from 'contentful-management/dist/typings/entities/space';
 import { MASTER_PATTERN, FEATURE_PATTERN, CONTENTFUL_ALIAS } from './env';
@@ -16,24 +16,25 @@ export const getBranchNames = (): BranchNames => {
   // Check the name of the event
   switch (github.context.eventName) {
     // If it is a Pull request we return the head and base ref
-    case EventNames.pullRequest:
-      const pullRequestPayload = github.context.payload as PullRequestEvent
+    case EventNames.pullRequest: {
+      const pullRequestPayload = github.context.payload as PullRequestEvent;
       return {
         headRef: pullRequestPayload.pull_request.head.ref,
         baseRef: pullRequestPayload.pull_request.base.ref,
         defaultBranch: pullRequestPayload.repository.default_branch,
       };
+    }
     // If is not a Pull request we need work on the baseRef therefore head is null
-    default:
-      const payload = github.context.payload as PushEvent
+    default: {
+      const payload = github.context.payload as PushEvent;
       return {
         headRef: null,
         baseRef: payload.ref.replace(/^refs\/heads\//, ''),
         defaultBranch: payload.repository.default_branch,
       };
+    }
   }
 };
-
 
 /**
  * Get the environment from a space
@@ -41,10 +42,7 @@ export const getBranchNames = (): BranchNames => {
  * @param space
  * @param branchNames
  */
-export const getOrCreateEnvironment = async (
-  space: Space,
-  branchNames: BranchNames
-): Promise<EnvironmentProps> => {
+export const getOrCreateEnvironment = async (space: Space, branchNames: BranchNames): Promise<EnvironmentProps> => {
   const environmentNames = {
     base: branchNameToEnvironmentName(branchNames.baseRef),
     head: branchNames.headRef ? branchNameToEnvironmentName(branchNames.headRef) : null,
@@ -54,7 +52,7 @@ export const getOrCreateEnvironment = async (
 
   // Set type of environment
   let environmentType: EnvironmentType | string = 'feature';
-  
+
   // If the baseRef is the same as the default branch then we presume we are going to create a master environment
   // for the given master_pattern
   if (branchNames.baseRef === branchNames.defaultBranch) {

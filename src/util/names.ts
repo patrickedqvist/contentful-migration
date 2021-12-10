@@ -1,4 +1,4 @@
-import type { NameFromPatternArgs } from "../types";
+import type { NameFromPatternArgs } from '../types';
 
 /**
  * Convert fileNames to versions
@@ -21,7 +21,6 @@ export const versionToFilename = (version: string): string => `${version.replace
  * @param branchName
  */
 export const branchNameToEnvironmentName = (branchName: string): string => branchName.replace(/[_./]/g, '-');
-
 
 export enum Matcher {
   YY = 'YY',
