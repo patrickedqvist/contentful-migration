@@ -1,25 +1,30 @@
-import { info, debug, isDebug } from '@actions/core';
+import { info, warning } from '@actions/core';
+import chalk from 'chalk'
+import { VERBOSE } from '../env';
+
+// Force colors in github
+chalk.level = 3;
 
 class Logger {
   public static info(message: string): void {
-    info(message);
+    info(chalk.white(message));
   }
 
   public static success(message: string): void {
-    info(`✅ ${message}`);
+    info(`✅ ${chalk.green(message)}`);
   }
 
   public static warn(message: string): void {
-    info(`⚠️ ${message}`);
+    warning(`⚠️ ${chalk.yellow(message)}`);
   }
 
   public static error(message: string): void {
-    info(`💩 ${message}`);
+    info(`🔥 ${chalk.red(message)}`);
   }
 
   public static debug(message: string): void {
-    if (isDebug()) {
-      debug(message);
+    if (VERBOSE) {
+      info(`🔎 ${chalk.blue(message)}`);
     }
   }
 }

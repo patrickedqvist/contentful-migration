@@ -2,6 +2,7 @@ import { Environment } from 'contentful-management/dist/typings/entities/environ
 
 export enum EventNames {
   pullRequest = 'pull_request',
+  push = 'push',
 }
 
 export interface BranchNames {

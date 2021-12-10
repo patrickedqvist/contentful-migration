@@ -1,14 +1,14 @@
-import core from '@actions/core';
-import github from '@actions/github';
+import * as core from '@actions/core';
+import * as github from '@actions/github';
 import { runMigration } from 'contentful-migration';
 import { readdir } from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 import toSemver from 'to-semver';
-import { Space } from 'contentful-management/dist/typings/entities/space';
+import type { Space } from 'contentful-management/dist/typings/entities/space';
 
-import { MAX_NUMBER_OF_TRIES, CONTENTFUL_ALIAS } from './constants';
 import {
+  CONTENTFUL_ALIAS,
   MIGRATIONS_DIR,
   VERSION_CONTENT_TYPE,
   VERSION_FIELD,
@@ -17,11 +17,14 @@ import {
   SET_ALIAS,
   DELETE_FEATURE,
   FEATURE_PATTERN,
+  DELAY,
+  MAX_NUMBER_OF_TRIES,
 } from './env';
-import { getBranchNames, getEnvironment } from './github';
+import { getBranchNames, getOrCreateEnvironment } from './github';
 import { filenameToVersion, versionToFilename, getNameFromPattern } from './util/names';
 import delay from './util/delay';
 import Logger from './util/logger';
+import waitForEnvironment from './util/waitForEnvironment';
 
 export const readdirAsync = promisify(readdir);
 
@@ -35,28 +38,18 @@ export const runAction = async (space: Space): Promise<void> => {
 
   Logger.debug(`Branch names for getting environment ${JSON.stringify(branchNames)}`);
 
-  const { environmentId, environment, environmentType } = await getEnvironment(space, branchNames);
-
-  // Counter to limit retries
-  let count = 0;
+  const { environmentId, environment, environmentType } = await getOrCreateEnvironment(space, branchNames);
 
   Logger.info('Waiting for environment processing...');
 
-  while (count < MAX_NUMBER_OF_TRIES) {
-    const env = await space.getEnvironment(environment.sys.id);
-    const status = env.sys.status.sys.id;
-
-    if (status === 'ready') {
-      Logger.success(`Successfully processed new environment: "${environmentId}"`);
-      break;
-    } else if (status === 'failed') {
-      Logger.warn('Environment creation failed');
-      break;
-    }
-
-    await delay();
-    count++;
-  }
+  const wait = parseInt(DELAY, 10);
+  const maxTries = parseInt(MAX_NUMBER_OF_TRIES, 10);
+  await waitForEnvironment({
+    space, 
+    environment,
+    delay: wait, 
+    maxTries
+  });
 
   Logger.debug('Update API Keys to allow access to new environment');
   const newEnv = {
@@ -70,14 +63,15 @@ export const runAction = async (space: Space): Promise<void> => {
   const { items: keys } = await space.getApiKeys();
   await Promise.all(
     keys.map((key) => {
-      Logger.debug(`Updating: "${key.sys.id}"`);
+      Logger.debug(`Adding new environment to api key: "${key.sys.id}"`);
       key.environments.push(newEnv);
       return key.update();
     })
   );
 
   Logger.debug('Get default locale for new environment');
-  const locales = await environment.getLocales();
+  const env = await space.getEnvironment(environment.sys.id);
+  const locales = await env.getLocales();
   const defaultLocale = locales.items.find((locale) => locale.default);
   const defaultLocaleCode = defaultLocale.code;
   Logger.debug(`Default locale: "${defaultLocaleCode}"`);
@@ -119,6 +113,7 @@ export const runAction = async (space: Space): Promise<void> => {
   }
 
   const migrationsToRun = availableMigrations.slice(currentMigrationIndex + 1);
+
   const migrationOptions = {
     spaceId: SPACE_ID,
     environmentId,
@@ -127,17 +122,21 @@ export const runAction = async (space: Space): Promise<void> => {
   };
 
   Logger.debug('Run migrations and update version entry');
+
   // Allow mutations
   let migrationToRun;
   let mutableStoredVersionEntry = storedVersionEntry;
   while ((migrationToRun = migrationsToRun.shift())) {
     const filePath = path.join(MIGRATIONS_DIR, versionToFilename(migrationToRun));
+    
     Logger.debug(`Running ${filePath}`);
+
     await runMigration(
       Object.assign(migrationOptions, {
         filePath,
       })
     );
+
     Logger.success(`Migration script ${migrationToRun}.js succeeded`);
 
     mutableStoredVersionEntry.fields.version[defaultLocaleCode] = migrationToRun;
@@ -162,13 +161,17 @@ export const runAction = async (space: Space): Promise<void> => {
         return alias.update();
       })
       .then((alias) => Logger.success(`alias ${alias.sys.id} updated.`))
-      .catch(Logger.error);
+      .catch((error) => {
+        if ( error instanceof Error) {
+          Logger.error(error.message)
+        }
+      });
   } else {
     Logger.debug('Running on feature branch');
     Logger.debug('No alias changes required');
   }
 
-  // If the sandbox environment should be deleted
+  // If the sandbox environment should be deleted (DELETE_FUTURE = true)
   // And the baseRef is the repository default_branch (master|main ...)
   // And the Pull Request has been merged
   // Then delete the sandbox environment

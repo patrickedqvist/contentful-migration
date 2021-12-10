@@ -7,6 +7,10 @@ inputs:
   management_api_key:
     description: "The management-api key for contentful"
     required: true
+  contentful_alias:
+    description: "The alias name of the contentful space"
+    required: false
+    default: "master"
   version_content_type:
     description: "The content-type that tracks the version"
     required: false
@@ -18,7 +22,7 @@ inputs:
   master_pattern:
     description: "The pattern that should be used for the new master"
     required: false
-    default: "master-[YYYY]-[MM]-[DD]-[mm][ss]"
+    default: "main-[YYYY]-[MM]-[DD]-[mm][ss]"
   feature_pattern:
     description: "The pattern that should be used for the new feature"
     required: false
@@ -35,6 +39,18 @@ inputs:
     description: "The directory to look for migrations"
     required: false
     default: "migrations"
+  verbose:
+    description: "Log more information that can be useful for debugging"
+    required: false
+    default: "false"
+  delay: 
+    description: "Delay in seconds between checking for checking status on newly created environment"
+    required: false
+    default: "5000"
+  max_number_of_tries:
+    description: "The maximum number of tries to check the status of the environment"
+    required: false
+    default: "10"
 
 outputs:
   environment_url:
