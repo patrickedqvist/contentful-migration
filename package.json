@@ -2,7 +2,7 @@
   "name": "contentful-migration",
   "version": "1.0.0",
   "description": "Github action for running Contentful migrations",
-  "main": "src/index.ts",
+  "main": "src/index.js",
   "scripts": {
     "test": "jest",
     "build": "ncc build --source-map --license licenses.txt",
@@ -51,6 +51,7 @@
     "chalk": "^5.0.0",
     "contentful-management": "^7.45.7",
     "contentful-migration": "^4.6.0",
+    "dotenv": "^10.0.0",
     "to-semver": "^4.0.0",
     "zen-observable": "^0.8.15"
   }
