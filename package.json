@@ -51,7 +51,7 @@
     "chalk": "^5.0.0",
     "contentful-management": "^7.50.1",
     "contentful-migration": "^4.6.0",
-    "dotenv": "^11.0.0",
+    "dotenv": "^14.2.0",
     "to-semver": "^4.0.0",
     "uuid": "^8.3.2",
     "zen-observable": "^0.8.15"
