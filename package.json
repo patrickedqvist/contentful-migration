@@ -31,7 +31,7 @@
     "@babel/preset-typescript": "^7.16.7",
     "@octokit/webhooks-definitions": "^3.67.3",
     "@types/jest": "^27.4.0",
-    "@types/node": "^17.0.10",
+    "@types/node": "^17.0.12",
     "@types/zen-observable": "^0.8.3",
     "@typescript-eslint/eslint-plugin": "^5.10.0",
     "@typescript-eslint/parser": "^5.10.0",
