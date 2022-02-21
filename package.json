@@ -26,7 +26,7 @@
   "author": "Patrick Edqvist <patrick.edqvist@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.17.4",
+    "@babel/core": "^7.17.5",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
     "@octokit/webhooks-definitions": "^3.67.3",
